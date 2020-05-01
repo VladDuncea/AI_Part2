@@ -162,33 +162,39 @@ def a_star():
 	while len(lopen) != 0:
 		nod_curent = lopen[0]
 		lclosed.append(nod_curent)
-		if nod_curent.nod_graf.info == rad_arbore.problema.nod_scop:
-			break	  # am gasit cel mai bun drum
+		if nod_curent.test_scop():
+			break  # am gasit cel mai bun drum
 		lopen.remove(nod_curent)
 		succesori = nod_curent.expandeaza()
-		for (s,val) in succesori:
+		for (s, val) in succesori:
 			nod_nou = None
+
 			# daca apartine drumului sarim peste
 			if nod_curent.contine_in_drum(s):
 				continue
-			# nu apartine drumului
-			# verificam daca apare in lopen
-			aux = None
-			for n in lopen:
-				if n.nod_graf.info == s.info:
-					aux = n
-			if aux is not None and (aux.f > (nod_curent.g + val + s.h)):
-				lopen.remove(aux)
-			aux = None
-			for n in lclosed:
-				if n.nod_graf.info == s.info:
-					aux = n
-			if aux is not None and (aux.f > (nod_curent.g + val + s.h)):
-				lclosed.remove(aux)
-			nod_nou = NodParcurgere(s, nod_curent, nod_curent.g + val, nod_curent.g + val + s.h)
-			lopen.append(nod_nou)
-		lopen.sort(key=lambda x: (x.f,-x.g))
 
+			# verificam daca apare in lopen
+			aux = in_lista(lopen, s)
+			if aux is not None:
+				if aux.f > (nod_curent.g + val + s.h):
+					# nodul exista in open dar am gasit o valoare mai buna
+					lopen.remove(aux)
+					nod_nou = NodParcurgere(s, nod_curent, nod_curent.g + val, nod_curent.g + val + s.h)
+			else:
+				# nu am gasit in open, cautam in closed
+				aux = in_lista(lclosed, s)
+				if aux is not None:
+					# nodul exista in closed dar am gasit o valoare mai buna
+					if aux.f > (nod_curent.g + val + s.h):
+						lclosed.remove(aux)
+						nod_nou = NodParcurgere(s, nod_curent, nod_curent.g + val, nod_curent.g + val + s.h)
+				else:
+					# nu e nici in open nici in closed
+					nod_nou = NodParcurgere(s, nod_curent, nod_curent.g + val, nod_curent.g + val + s.h)
+
+			if nod_nou is not None:
+				lopen.append(nod_nou)
+		lopen.sort(key=lambda x: (x.f, -x.g))
 	print("\n------------------ Concluzie -----------------------")
 	if(len(lopen)==0):
 		print("Lista open e vida, nu avem drum de la nodul start la nodul scop")
