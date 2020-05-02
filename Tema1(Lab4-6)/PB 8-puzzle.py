@@ -1,22 +1,26 @@
 import copy
 
 
-# ASTA SE MODIFICA IN FUNCTIE DE PROBLEMA
 class Problema:
 	def __init__(self):
-		self.date_init = [['a'], ['c', 'b'], ['d']]
-		self.scop = [['b', 'c'], [], ['d', 'a']]
+		self.dim_tabla = 3
+		self.date_init = [[2, 4, 3], [8, 7, 5], [1, 0, 6]]
+		self.scop = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 
 	def calc_h(self, date):
 		count = 0
+		# pentru fiecare placuta(nu 0) calculeaza dist manhattan cu unde ar trebui sa fie
 		for i in range(len(date)):
 			for j in range(len(date[i])):
-				if j < len(self.scop[i]):
-					if date[i][j] != self.scop[i][j]:
-						count += 1
-				else:
-					count += 1
-
+				# sari spatiul
+				if date[i][j] == 0:
+					continue
+				# gaseste pozitia in scop
+				for ii, e in enumerate(self.scop):
+					for jj, ee in enumerate(e):
+						if date[i][j] == ee:
+							count += abs(i - ii) + abs(j-jj)
+							break
 		return count
 # Sfarsit definire problema
 
@@ -56,28 +60,31 @@ class NodParcurgere:
 			nod_c = nod_c.parinte
 		return False
 
-	# ASTA SE MODIFICA IN FUNCTIE DE PROBLEMA
+	# se modifica in functie de problema
 	def expandeaza(self):
 		# Expandeaza nodul curent, intoarce lista de succesori
 		# Construieste direct succesorii ca un nodParcurgere, pare mult mai simplu asa
 		lista = []
-		nr_stive = len(self.date)
-		for i in range(nr_stive):
-			if len(self.date[i]) > 0:
-				for j in range(nr_stive):
-					# sari peste aceeasi stiva
-					if j == i:
-						continue
-					# copiam vechea stare
-					date_nou = copy.deepcopy(self.date)
-					# luam cubul
-					val = date_nou[i].pop()
-					# il punem in noua stiva
-					date_nou[j].append(val)
-					# calculam noul h
-					noul_h = self.problema.calc_h(date_nou)
-					# construim nodul
-					lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
+		dim = self.problema.dim_tabla
+		# cautam placuta 0
+		for i, e in enumerate(self.date):
+			for j, ee in enumerate(e):
+				if ee == 0:
+					# luam cele 4 mutari posibile
+					for (ii, jj) in [[-1,0],[1,0],[0,-1],[0,1]]:
+						# verificam sa fie o miscare valida
+						if (i + ii) < 0 or (j + jj) <0 or (i + ii) >= dim or (j + jj) >= dim:
+							continue
+						# copiem configuratia
+						date_nou = copy.deepcopy(self.date)
+						# punem valoarea in locul lui 0
+						date_nou[i][j] = date_nou[i + ii][j + jj]
+						# puneam 0 in locul valorii
+						date_nou[i + ii][j + jj] = 0
+						# calculam noul h
+						noul_h = self.problema.calc_h(date_nou)
+						# construim nodul
+						lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
 		return lista
 
 	# se modifica in functie de problema
@@ -101,7 +108,6 @@ def str_info_noduri(lista):
 	return sir
 
 
-# ASTA SE MODIFICA IN FUNCTIE DE PROBLEMA
 def str_simpla(lista):
 	"""
 		o functie folosita strict in afisari - poate fi modificata in functie de problema
@@ -109,23 +115,11 @@ def str_simpla(lista):
 	pas = 0
 	sir = "\n"
 	for x in lista:
-		# afiseaza pasul, pasul 0 e ca avem dat
-		sir += "Pas" + str(pas)+":\n"
+		sir += "Pas" + str(pas) + ":\n"
 		pas += 1
-		# gaseste adancimea maxima
-		maxx = 0
-		for stiva in x.date:
-			if len(stiva) > maxx:
-				maxx = len(stiva)
-
-		# afiseaza rand cu rand
-		for i in range(maxx-1, -1, -1):
-			for stiva in x.date:
-				if len(stiva) > i:
-					sir += str(stiva[i])
-				else:
-					sir += "-"
-				sir += " "
+		for rand in x.date:
+			for val in rand:
+				sir += str(val) + " "
 			sir += "\n"
 		sir += "\n"
 	return sir
