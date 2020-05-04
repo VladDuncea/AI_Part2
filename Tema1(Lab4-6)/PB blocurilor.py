@@ -3,11 +3,14 @@ import copy
 
 # ASTA SE MODIFICA IN FUNCTIE DE PROBLEMA
 class Problema:
+
 	def __init__(self):
 		self.date_init = [['a'], ['c', 'b'], ['d']]
 		self.scop = [['b', 'c'], [], ['d', 'a']]
 
-	def calc_h(self, date):
+	# numarul de blocuri diferite
+	# pasi: 4
+	def calc_h1(self, date):
 		count = 0
 		for i in range(len(date)):
 			for j in range(len(date[i])):
@@ -16,7 +19,22 @@ class Problema:
 						count += 1
 				else:
 					count += 1
+		return count
 
+	# numarul de stive diferite
+	# pasi: 6
+	def calc_h2(self, date):
+		count = 0
+		for i in range(len(date)):
+			for j in range(len(date[i])):
+				# daca avem o diferenta o contorizam si trecem la urmatoarea stiva
+				if j < len(self.scop[i]):
+					if date[i][j] != self.scop[i][j]:
+						count += 1
+						break
+				else:
+					count += 1
+					break
 		return count
 # Sfarsit definire problema
 
@@ -75,7 +93,7 @@ class NodParcurgere:
 					# il punem in noua stiva
 					date_nou[j].append(val)
 					# calculam noul h
-					noul_h = self.problema.calc_h(date_nou)
+					noul_h = self.problema.calc_h1(date_nou)
 					# construim nodul
 					lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
 		return lista
@@ -154,12 +172,15 @@ def in_lista(lista, nod_parc):
 
 
 def a_star():
+	# contor pt pasi, pentru statistici
+	pasi = 0
 	rad_arbore = NodParcurgere(NodParcurgere.problema.date_init)
 	lopen = [rad_arbore]		# open va contine elemente de tip NodParcurgere
 	lclosed = []				# closed va contine elemente de tip NodParcurgere
 	nod_curent = None
 	while len(lopen) != 0:
 		nod_curent = lopen[0]
+		pasi += 1
 		lclosed.append(nod_curent)
 		if nod_curent.test_scop():
 			break	  # am gasit cel mai bun drum
@@ -200,6 +221,7 @@ def a_star():
 		print("Lista open e vida, nu avem drum de la nodul start la nodul scop")
 	else:
 		print("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
+		print("Numar de pasi incercati: " + str(pasi))
 	
 
 if __name__ == "__main__":
