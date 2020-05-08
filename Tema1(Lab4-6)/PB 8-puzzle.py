@@ -1,14 +1,20 @@
 import copy
+import time
+
+# 1 pentru euristica optima,2 pentru euristica secundara
+EURISTICA = 2
 
 
 class Problema:
+	# la fel putin modificat fata de pdf pentru a rula mai mult
 	def __init__(self):
 		self.dim_tabla = 3
-		self.date_init = [[2, 4, 3], [8, 7, 5], [1, 0, 6]]
+		self.date_init = [[4, 3, 2], [8, 7, 5], [1, 0, 6]]
 		self.scop = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 
 	# calculam distanta manhattan intre pozitia placutei si pozitia din scop
-	# pasi: 14
+	# pasi: 439
+	# timp: 0.06
 	def calc_h1(self, date):
 		count = 0
 		# pentru fiecare placuta(nu 0) calculeaza dist manhattan cu unde ar trebui sa fie
@@ -26,7 +32,8 @@ class Problema:
 		return count
 
 	# calculam numarul de placute care nu se afla la locul corect
-	# pasi: 38
+	# pasi: 2323
+	# timp: 1.08
 	def calc_h2(self, date):
 		count = 0
 		# pentru fiecare placuta(nu 0) calculeaza dist manhattan cu unde ar trebui sa fie
@@ -99,7 +106,10 @@ class NodParcurgere:
 						# puneam 0 in locul valorii
 						date_nou[i + ii][j + jj] = 0
 						# calculam noul h
-						noul_h = self.problema.calc_h2(date_nou)
+						if EURISTICA == 1:
+							noul_h = self.problema.calc_h1(date_nou)
+						else:
+							noul_h = self.problema.calc_h2(date_nou)
 						# construim nodul
 						lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
 		return lista
@@ -132,7 +142,7 @@ def str_simpla(lista):
 	pas = 0
 	sir = "\n"
 	for x in lista:
-		sir += "Pas" + str(pas) + ":\n"
+		sir += "Pas " + str(pas) + ":\n"
 		pas += 1
 		for rand in x.date:
 			for val in rand:
@@ -171,6 +181,7 @@ def a_star():
 	lopen = [rad_arbore]		# open va contine elemente de tip NodParcurgere
 	lclosed = []				# closed va contine elemente de tip NodParcurgere
 	nod_curent = None
+	start_time = time.time()
 	while len(lopen) != 0:
 		nod_curent = lopen[0]
 		pasi += 1
@@ -215,6 +226,7 @@ def a_star():
 	else:
 		print("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
 		print("Numar de pasi incercati: " + str(pasi))
+	print("Timp trecut:" + str(time.time() - start_time))
 
 
 if __name__ == "__main__":

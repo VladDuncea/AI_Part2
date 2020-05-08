@@ -1,5 +1,5 @@
 import copy
-
+import time
 
 class Problema:
 	def __init__(self):
@@ -10,6 +10,7 @@ class Problema:
 		self.scop = [self.N, self.N, 0, 0, 'vest']
 
 	# nr de oameni pe malul de est /(M-1)
+	# timp 0.001
 	def calc_h(self, date):
 		count = (date[2] + date[3]) // (self.M - 1)
 		return count
@@ -130,7 +131,7 @@ def str_simpla(lista):
 	pas = 0
 	sir = "\n"
 	for x in lista:
-		sir += "Pas" + str(pas) + ":\n"
+		sir += "Pas " + str(pas) + ":\n"
 		pas += 1
 		sir += "EST: C:" + str(x.date[2]) + " M: " + str(x.date[3]) + "\n"
 		sir += "VEST: C:" + str(x.date[0]) + " M:" + str(x.date[1]) + "\n"
@@ -166,6 +167,7 @@ def a_star():
 	lopen = [rad_arbore]  # open va contine elemente de tip NodParcurgere
 	lclosed = []  # closed va contine elemente de tip NodParcurgere
 	nod_curent = None
+	start_time = time.time()
 	while len(lopen) != 0:
 		nod_curent = lopen[0]
 		lclosed.append(nod_curent)
@@ -208,7 +210,7 @@ def a_star():
 		print("Lista open e vida, nu avem drum de la nodul start la nodul scop")
 	else:
 		print("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
-
+	print("Timp trecut:" + str(time.time() - start_time))
 
 if __name__ == "__main__":
 	problema = Problema()

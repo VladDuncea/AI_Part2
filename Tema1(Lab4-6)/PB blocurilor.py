@@ -1,15 +1,21 @@
 import copy
+import time
+
+# 1 pentru euristica optima,2 pentru euristica secundara
+EURISTICA = 2
 
 
 # ASTA SE MODIFICA IN FUNCTIE DE PROBLEMA
 class Problema:
 
+	# am dat un exemplu cu un cub in plus, cel din pdf rula prea repede
 	def __init__(self):
-		self.date_init = [['a'], ['c', 'b'], ['d']]
-		self.scop = [['b', 'c'], [], ['d', 'a']]
+		self.date_init = [['a'], ['c', 'b', 'd'], ['f']]
+		self.scop = [['b', 'c'], ['f'], ['d', 'a']]
 
 	# numarul de blocuri diferite
-	# pasi: 4
+	# pasi: 51
+	# timp: 0.004
 	def calc_h1(self, date):
 		count = 0
 		for i in range(len(date)):
@@ -22,7 +28,8 @@ class Problema:
 		return count
 
 	# numarul de stive diferite
-	# pasi: 6
+	# pasi: 376
+	# timp: 0.04
 	def calc_h2(self, date):
 		count = 0
 		for i in range(len(date)):
@@ -93,7 +100,10 @@ class NodParcurgere:
 					# il punem in noua stiva
 					date_nou[j].append(val)
 					# calculam noul h
-					noul_h = self.problema.calc_h1(date_nou)
+					if EURISTICA == 1:
+						noul_h = self.problema.calc_h1(date_nou)
+					else:
+						noul_h = self.problema.calc_h2(date_nou)
 					# construim nodul
 					lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
 		return lista
@@ -128,7 +138,7 @@ def str_simpla(lista):
 	sir = "\n"
 	for x in lista:
 		# afiseaza pasul, pasul 0 e ca avem dat
-		sir += "Pas" + str(pas)+":\n"
+		sir += "Pas " + str(pas)+":\n"
 		pas += 1
 		# gaseste adancimea maxima
 		maxx = 0
@@ -178,6 +188,7 @@ def a_star():
 	lopen = [rad_arbore]		# open va contine elemente de tip NodParcurgere
 	lclosed = []				# closed va contine elemente de tip NodParcurgere
 	nod_curent = None
+	start_time = time.time()
 	while len(lopen) != 0:
 		nod_curent = lopen[0]
 		pasi += 1
@@ -222,7 +233,7 @@ def a_star():
 	else:
 		print("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
 		print("Numar de pasi incercati: " + str(pasi))
-	
+	print("Timp trecut:" + str(time.time() - start_time))
 
 if __name__ == "__main__":
 	problema = Problema()
