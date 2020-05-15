@@ -1,6 +1,8 @@
 import time
 import copy
 
+# TODO: de implementat PASS daca nu exista miscare valida
+# TODO: Minimax crapa pe adancime 5 jucator A 2c 5f 1b
 
 def scor(tabla, jucator):
     s = 0
@@ -204,7 +206,7 @@ class Joc:
 
     def fct_euristica(self):
         # numarul de piese JMAX - JMIN
-        return scor(self.matr, Joc.JMAX) - scor(self.matr,Joc.JMIN)
+        return scor(self.matr, Joc.JMAX) - scor(self.matr, Joc.JMIN)
 
     def estimeaza_scor(self, adancime):
         t_final = self.final()
@@ -452,13 +454,12 @@ def main():
 
             # dupa iesirea din while sigur am valida coloana
             # facem miscarea
-            print(str(coloana) + "\n")
             stare_curenta.tabla_joc.aplica_miscare((linie, coloana), Joc.JMIN)
 
             # afisarea starii jocului in urma mutarii utilizatorului
             print("\nTabla dupa mutarea jucatorului")
-            print(str(stare_curenta))
-
+            # print(str(stare_curenta))
+            print(stare_curenta.tabla_joc.afis_smart(stare_curenta.jucator_opus()))
             # testez daca jocul a ajuns intr-o stare finala
             # si afisez un mesaj corespunzator in caz ca da
             if afis_daca_final(stare_curenta):
