@@ -44,26 +44,26 @@ class Joc:
 
 		# verificam linii
 		for i in range(Joc.NR_LINII):
-			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT + 1):
 				if elem_identice([self.matr[i][j + x] for x in range(Joc.NR_CONNECT)]):
 					return self.matr[i][j]
 
 		# verificam coloane
-		for i in range(Joc.NR_LINII - Joc.NR_CONNECT):
+		for i in range(Joc.NR_LINII - Joc.NR_CONNECT + 1):
 			for j in range(Joc.NR_COLOANE):
 				if elem_identice([self.matr[i + x][j] for x in range(Joc.NR_CONNECT)]):
 					return self.matr[i][j]
 
 		# verificam diagonale \
-		for i in range(Joc.NR_LINII - Joc.NR_CONNECT):
-			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT):
+		for i in range(Joc.NR_LINII - Joc.NR_CONNECT + 1):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT + 1):
 				if elem_identice([self.matr[i + x][j + x] for x in range(Joc.NR_CONNECT)]):
 					return self.matr[i][j]
 
 		# verificam diagonale /
 		for i in range(Joc.NR_CONNECT - 1, Joc.NR_LINII, 1):
-			for j in range(Joc.NR_CONNECT - 1, Joc.NR_COLOANE, 1):
-				if elem_identice([self.matr[i - x][j - x] for x in range(Joc.NR_CONNECT)]):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT + 1):
+				if elem_identice([self.matr[i - x][j + x] for x in range(Joc.NR_CONNECT)]):
 					return self.matr[i][j]
 
 		if Joc.GOL not in (item for sublist in self.matr for item in sublist):
@@ -95,26 +95,26 @@ class Joc:
 
 		# verificam linii
 		for i in range(Joc.NR_LINII):
-			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT+1):
 				if interval_deschis([self.matr[i][j + x] for x in range(Joc.NR_CONNECT)], jucator):
 					rez += 1
 
 		# verificam coloane
-		for i in range(Joc.NR_LINII - Joc.NR_CONNECT):
+		for i in range(Joc.NR_LINII - Joc.NR_CONNECT+1):
 			for j in range(Joc.NR_COLOANE):
 				if interval_deschis([self.matr[i + x][j] for x in range(Joc.NR_CONNECT)], jucator):
 					rez += 1
 
 		# verificam diagonale \
-		for i in range(Joc.NR_LINII - Joc.NR_CONNECT):
-			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT):
+		for i in range(Joc.NR_LINII - Joc.NR_CONNECT+1):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT+1):
 				if interval_deschis([self.matr[i + x][j + x] for x in range(Joc.NR_CONNECT)], jucator):
 					rez += 1
 
 		# verificam diagonale /
 		for i in range(Joc.NR_CONNECT - 1, Joc.NR_LINII, 1):
-			for j in range(Joc.NR_CONNECT - 1, Joc.NR_COLOANE, 1):
-				if interval_deschis([self.matr[i - x][j - x] for x in range(Joc.NR_CONNECT)], jucator):
+			for j in range(Joc.NR_COLOANE - Joc.NR_CONNECT+1):
+				if interval_deschis([self.matr[i - x][j + x] for x in range(Joc.NR_CONNECT)], jucator):
 					rez += 1
 
 		return rez

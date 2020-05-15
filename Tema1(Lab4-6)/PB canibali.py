@@ -100,7 +100,7 @@ class NodParcurgere:
 				# calculam noul h
 				noul_h = self.problema.calc_h(date_nou)
 				# construim nodul
-				lista = lista + [NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h)]
+				lista.append(NodParcurgere(date_nou, self, self.g + 1, self.g + 1 + noul_h))
 		return lista
 
 	# se modifica in functie de problema
