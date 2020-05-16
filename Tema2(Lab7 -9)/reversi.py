@@ -1,9 +1,6 @@
 import time
 import copy
 
-# TODO: de implementat PASS daca nu exista miscare valida
-# TODO: Minimax crapa pe adancime 5 jucator A 2c 5f 1b
-
 def scor(tabla, jucator):
     s = 0
     for linie in tabla:
@@ -40,8 +37,7 @@ class Joc:
             self.matr[int(Joc.NR_LINII/2)][int(Joc.NR_COLOANE/2)] = 'A'
 
     def final(self):
-        # returnam simbolul jucatorului castigator daca are 4 piese adiacente
-        # pe linie, coloana, diagonala \ sau diagonala /
+        # returnam simbolul jucatorului castigator
         # sau returnam 'remiza'
         # sau 'False' daca nu s-a terminat jocul\
 
@@ -202,6 +198,11 @@ class Joc:
                 joc_nou = Joc(copy.deepcopy(self.matr))
                 joc_nou.aplica_miscare((i, j), jucator)
                 l_mutari.append(joc_nou)
+
+        # verificam cazul in care nu am generat miscari noi adaugam o stare cu tabla identica
+        if len(l_mutari) == 0:
+            joc_nou = Joc(copy.deepcopy(self.matr))
+            l_mutari.append(joc_nou)
         return l_mutari
 
     def fct_euristica(self):
@@ -423,6 +424,11 @@ def main():
     linie = -1
     coloana = -1
     while True:
+        # verificare daca poate juca(nu se poate ca ambii sa fie blocati, altfel se termina jocul si afisam castigator)
+        if not stare_curenta.tabla_joc.exista_miscare(stare_curenta.j_curent):
+            # dam tura celuilalt
+            stare_curenta.j_curent = stare_curenta.jucator_opus()
+
         if stare_curenta.j_curent == Joc.JMIN:
             # afisare tabla ajutatoare
             print("* sunt pozitii valide")

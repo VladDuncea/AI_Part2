@@ -2,7 +2,7 @@ import copy
 import time
 
 # 1 pentru euristica optima,2 pentru euristica secundara
-EURISTICA = 1
+EURISTICA = 3
 
 
 class Problema:
@@ -20,8 +20,8 @@ class Problema:
         self.scop = scop
 
     # calculam distanta manhattan intre pozitia mesajului si pozitia din scop
-    # pasi: 439
-    # timp: 0.06
+    # pasi: 30
+    # timp: 0.001
     def calc_h1(self, date):
         return abs(self.scop[0] - date[0]) + abs(self.scop[1] - date[1])
 
@@ -31,6 +31,12 @@ class Problema:
     def calc_h2(self, date):
         count = 0
         return count
+
+    # calculam distanta intre randuri
+    # pasi: 31
+    # timp: 0.001
+    def calc_h3(self, date):
+        return 0
 
     def verif_pozitie(self,sursa,dest):
         # verif loc liber
@@ -87,8 +93,10 @@ class NodParcurgere:
         # calculam noul h
         if EURISTICA == 1:
             noul_h = self.problema.calc_h1(date)
-        else:
+        elif EURISTICA == 2:
             noul_h = self.problema.calc_h2(date)
+        else:
+            noul_h = self.problema.calc_h3(date)
         return noul_h
 
     def creeaza_nod(self,noua_poz):
