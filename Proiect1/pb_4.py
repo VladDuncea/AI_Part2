@@ -1,9 +1,6 @@
 import copy
 import time
 
-# 1 pentru euristica optima,2 pentru euristica secundara
-EURISTICA = 3
-
 
 class Problema:
 
@@ -18,34 +15,39 @@ class Problema:
         self.pers_initiala = pers_initiala
         # pozitia din matrice la care trebuie sa ajunga mesajul
         self.scop = scop
+        # setam euristica default
+        self.euristica = 1
 
-    # calculam distanta manhattan intre pozitia mesajului si pozitia din scop
+    # functie ca sa setam euristica curenta
+    def set_euristica(self, euristica):
+        self.euristica = euristica
+
+    # calculam distanta manhatan, dar trecand prin penultima/ultima banca
     # pasi: 30
     # timp: 0.001
     def calc_h1(self, date):
         return abs(self.scop[0] - date[0]) + abs(self.scop[1] - date[1])
 
-    # calculam distanta manhatan, dar trecand prin penultima/ultima banca
+    # calculam distanta intre randuri
     # pasi: 2323
     # timp: 1.08
     def calc_h2(self, date):
-        count = 0
-        return count
+        return abs(self.scop[1] - date[1])
 
-    # calculam distanta intre randuri
-    # pasi: 31
+    # gresit
+    # pasi: 37
     # timp: 0.001
     def calc_h3(self, date):
-        return 0
+        return 900 - self.calc_h1(date)
 
-    def verif_pozitie(self,sursa,dest):
+    def verif_pozitie(self, sursa, dest):
         # verif loc liber
         if self.matrice[dest[0]][dest[1]] == "liber":
             return False
 
         # verificare suparati
-        for (pers1,pers2) in self.suparati:
-            if (pers1 == self.matrice[sursa[0]][sursa[1]] and pers2 == self.matrice[dest[0]][dest[1]]) or\
+        for (pers1, pers2) in self.suparati:
+            if (pers1 == self.matrice[sursa[0]][sursa[1]] and pers2 == self.matrice[dest[0]][dest[1]]) or \
                     (pers2 == self.matrice[sursa[0]][sursa[1]] and pers1 == self.matrice[dest[0]][dest[1]]):
                 return False
         return True
@@ -89,17 +91,17 @@ class NodParcurgere:
             nod_c = nod_c.parinte
         return False
 
-    def calc_euristica(self,date):
+    def calc_euristica(self, date):
         # calculam noul h
-        if EURISTICA == 1:
+        if NodParcurgere.problema.euristica == 1:
             noul_h = self.problema.calc_h1(date)
-        elif EURISTICA == 2:
+        elif NodParcurgere.problema.euristica == 2:
             noul_h = self.problema.calc_h2(date)
         else:
             noul_h = self.problema.calc_h3(date)
         return noul_h
 
-    def creeaza_nod(self,noua_poz):
+    def creeaza_nod(self, noua_poz):
         return NodParcurgere(noua_poz, self, self.g + 1, self.g + 1 + self.calc_euristica(noua_poz))
 
     # se modifica in functie de problema
@@ -116,18 +118,18 @@ class NodParcurgere:
         if i > 0 and self.problema.verif_pozitie((i, j), (i - 1, j)):
             lista.append(self.creeaza_nod((i - 1, j)))
         # poate sa dea sus daca nu e capat
-        if i < adancime-1 and self.problema.verif_pozitie((i, j), (i+1, j)):
-            lista.append(self.creeaza_nod((i+1, j)))
+        if i < adancime - 1 and self.problema.verif_pozitie((i, j), (i + 1, j)):
+            lista.append(self.creeaza_nod((i + 1, j)))
 
         # separam cazurile pentru coloana para/impara(numarat de la 0)
         # (par poate sa dea oriunde spre dreapta, impar spre stanga)
 
         # PAR
-        if j % 2==0 and self.problema.verif_pozitie((i,j), (i,j+1)):
-            lista.append(self.creeaza_nod((i, j+1)))
+        if j % 2 == 0 and self.problema.verif_pozitie((i, j), (i, j + 1)):
+            lista.append(self.creeaza_nod((i, j + 1)))
         # poate sa dea doar la capete spre stanga, si daca nu e ultima coloana in stanga
-        if j % 2==0 and j != 0 and i >= adancime-2 and self.problema.verif_pozitie((i,j), (i,j-1)):
-            lista.append(self.creeaza_nod((i, j-1)))
+        if j % 2 == 0 and j != 0 and i >= adancime - 2 and self.problema.verif_pozitie((i, j), (i, j - 1)):
+            lista.append(self.creeaza_nod((i, j - 1)))
 
         # IMPAR
         # poate sa dea doar la capete spre dreapta, si daca nu e ultima coloana in dreapta
@@ -166,9 +168,9 @@ def str_simpla(lista):
 
     problema = NodParcurgere.problema
     sir = str(problema.matrice[lista[0].date[0]][lista[0].date[1]]) + " "
-    for i in range(len(lista)-1):
+    for i in range(len(lista) - 1):
         sursa = lista[i].date
-        dest = lista[i+1].date
+        dest = lista[i + 1].date
         # v
         if sursa[0] + 1 == dest[0]:
             sir += "v"
@@ -212,7 +214,7 @@ def in_lista(lista, nod_parc):
     return None
 
 
-def a_star():
+def a_star(nume_output):
     # contor pt pasi, pentru statistici
     pasi = 0
     rad_arbore = NodParcurgere(NodParcurgere.problema.pers_initiala)
@@ -258,22 +260,23 @@ def a_star():
                 lopen.append(nod_nou)
         lopen.sort(key=lambda x: (x.f, -x.g))
 
-    print("\n------------------ Concluzie -----------------------")
-    if len(lopen) == 0:
-        print("Lista open e vida, nu avem drum de la nodul start la nodul scop")
-    else:
-        print("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
-        print("Numar de pasi incercati: " + str(pasi))
-    print("Timp trecut:" + str(time.time() - start_time))
+    with open(nume_output, 'a+') as fisier:
+        fisier.write("\n------------- Euristica " + str(NodParcurgere.problema.euristica) + " -----------------\n")
+        if len(lopen) == 0:
+            fisier.write("Lista open e vida, nu avem drum de la nodul start la nodul scop\n")
+        else:
+            fisier.write("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
+            fisier.write("\nNumar de pasi incercati: " + str(pasi))
+        fisier.write("Timp trecut:" + str(time.time() - start_time))
 
 
-def main():
+def citire(fisier):
     try:
         # citire date intrare si prelucrare
         adancime = 0
         matrice = []
         suparati = []
-        with open('date_intrare_1.txt', 'r') as fisier:
+        with open(fisier, 'r') as fisier:
             # citim primul rand
             linie = fisier.readline()
             nume = linie.split()
@@ -315,9 +318,22 @@ def main():
     except:
         print("Fisierul de input nu este formatat corect!")
         exit(1)
-    problema = Problema(adancime, suparati, matrice, initial, scop)
-    NodParcurgere.problema = problema
-    a_star()
+    return Problema(adancime, suparati, matrice, initial, scop)
+
+
+def main():
+    date_intrare = ['input_1.txt', 'input_2.txt', 'input_3.txt', 'input_4.txt']
+    date_iesire = ['output_1.txt', 'output_2.txt', 'output_3.txt', 'output_4.txt']
+
+    for i in range(len(date_intrare)):
+        # golim fisierul de iesire
+        f = open(date_iesire[i], "w")
+        f.close()
+        for euristica in range(1, 4, 1):
+            NodParcurgere.problema = citire(date_intrare[i])
+            NodParcurgere.problema.set_euristica(euristica)
+
+            a_star(date_iesire[i])
 
 
 if __name__ == "__main__":
