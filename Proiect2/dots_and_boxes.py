@@ -24,6 +24,7 @@ class Joc:
     NR_COLOANE = 3
     NR_LINII = 3
     SIMBOLURI_JUC = ['A', 'B']  # alb si negru
+    POZ_VALIDE = ['L', 'R', 'T', 'B']  # left, right, top, bottom
     JMIN = None
     JMAX = None
     GOL = ' '
@@ -33,7 +34,7 @@ class Joc:
         # in matricea verticala avem nr_coloane+1 coloane si nr_linii linii
         self.matr_vertic = vertical or [[0 for i in range(Joc.NR_COLOANE + 1)] for i in range(Joc.NR_LINII)]
         # in matricea orizontala avem nr_coloane coloane si nr_linii+1 linii
-        self.matr_orizon = orizontal or [[0 for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII+1)]
+        self.matr_orizon = orizontal or [[0 for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII + 1)]
 
     def final(self):
         # returnam simbolul jucatorului castigator
@@ -59,47 +60,58 @@ class Joc:
         # verificam daca mai exista linii necompletate
         for i in range(len(self.matr_vertic)):
             for j in range(len(self.matr_vertic[0])):
-                if not self.matr_vertic:
+                if not self.matr_vertic[i][j]:
                     return True
         for i in range(len(self.matr_orizon)):
             for j in range(len(self.matr_orizon[0])):
-                if not self.matr_orizon:
+                if not self.matr_orizon[i][j]:
                     return True
         # nu am gasit linii libere
         return False
 
+    def miscare_valida(self, miscare):
+        (x, y, z) = miscare
+
+        # verificam daca linia e disponibila
+        # stanga
+        if z == "L":
+            if self.matr_vertic[x][y] == 1:
+                return False
+        # dreapta
+        if z == "R":
+            if self.matr_vertic[x][y + 1] == 1:
+                return False
+        # sus
+        if z == "T":
+            if self.matr_orizon[x][y] == 1:
+                return False
+        # jos
+        if z == "B":
+            if self.matr_orizon[x + 1][y] == 1:
+                return False
+        return True
+
     # adaugam linia si intoarcem numarul de casute castigate intoarce -1 daca miscarea nu e valida
     def aplica_linie(self, miscare, jucator):
         (x, y, z) = miscare
-        opus = jucator_op(jucator)
+
+        # verificam(redundant, dar nu poti avea incredere in calculator(poate triseaza))
+        if not self.miscare_valida(miscare):
+            return -1
 
         # actualizam matricea de linii
         # stanga
         if z == "L":
-            if self.matr_vertic[x][y] == 0:
-                self.matr_vertic[x][y] = 1
-            else:
-                return -1
+            self.matr_vertic[x][y] = 1
         # dreapta
         if z == "R":
-            if self.matr_vertic[x][y+1] == 0:
-                self.matr_vertic[x][y+1] = 1
-            else:
-                return -1
-
+            self.matr_vertic[x][y + 1] = 1
         # sus
         if z == "T":
-            if self.matr_orizon[x][y] == 0:
-                self.matr_orizon[x][y] = 1
-            else:
-                return -1
-
+            self.matr_orizon[x][y] = 1
         # jos
         if z == "B":
-            if self.matr_orizon[x+1][y] == 0:
-                self.matr_orizon[x+1][y] = 1
-            else:
-                return -1
+            self.matr_orizon[x + 1][y] = 1
 
         # numaram cate patrate a facut si le actualizam
         contor = 0
@@ -110,13 +122,13 @@ class Joc:
             if z == "L":
                 j = y
             else:
-                j = y+1
+                j = y + 1
 
             # verificam la stanga daca nu e prima linie verticala
             if j != 0:
-                if self.matr_orizon[i][j-1] and self.matr_orizon[i+1][j-1] and self.matr_vertic[i][j-1]:
+                if self.matr_orizon[i][j - 1] and self.matr_orizon[i + 1][j - 1] and self.matr_vertic[i][j - 1]:
                     contor += 1
-                    self.matr_scor[i][j-1] = jucator
+                    self.matr_scor[i][j - 1] = jucator
 
             # verificam la dreapta daca nu e ultima linie verticala
             if j != Joc.NR_COLOANE:
@@ -135,36 +147,39 @@ class Joc:
 
             # verificam la sus daca nu e prima linie orizontala
             if i != 0:
-                if self.matr_orizon[i-1][j] and self.matr_vertic[i - 1][j] and self.matr_vertic[i-1][j + 1]:
+                if self.matr_orizon[i - 1][j] and self.matr_vertic[i - 1][j] and self.matr_vertic[i - 1][j + 1]:
                     contor += 1
-                    self.matr_scor[i-1][j] = jucator
+                    self.matr_scor[i - 1][j] = jucator
 
             # verificam la jos daca nu e ultima linie orizontala
             if i != Joc.NR_LINII:
-                if self.matr_orizon[i+1][j] and self.matr_vertic[i][j] and self.matr_vertic[i][j+1]:
+                if self.matr_orizon[i + 1][j] and self.matr_vertic[i][j] and self.matr_vertic[i][j + 1]:
                     contor += 1
                     self.matr_scor[i][j] = jucator
 
         return contor
 
-    # TODO
     def mutari_joc(self, jucator):
         l_mutari = []
 
-        # cautam toate miscarile valide
+        # incercam toate miscarile
         for i in range(Joc.NR_LINII):
             for j in range(Joc.NR_COLOANE):
-                if not self.miscare_valida((i, j), jucator):
-                    continue
-                # miscarea e valida creeaza un Joc nou si apoi aplica miscarea
-                joc_nou = Joc(copy.deepcopy(self.matr))
-                joc_nou.aplica_miscare((i, j), jucator)
-                l_mutari.append(joc_nou)
+                for poz in Joc.POZ_VALIDE:
+                    if not self.miscare_valida((i, j, poz)):
+                        continue
+                    # miscarea e valida creeaza un Joc nou si apoi aplica miscarea
+                    joc_nou = copy.deepcopy(self)
+                    if joc_nou.aplica_linie((i, j, poz), jucator) == 2:
+                        # daca a facut doua patrate poate sa joace iar
+                        lista = joc_nou.mutari_joc(jucator)
+                        if len(lista) != 0:
+                            l_mutari.extend(lista)
+                        else:
+                            l_mutari.append(joc_nou)
+                    else:
+                        l_mutari.append(joc_nou)
 
-        # verificam cazul in care nu am generat miscari noi adaugam o stare cu tabla identica
-        if len(l_mutari) == 0:
-            joc_nou = Joc(copy.deepcopy(self.matr))
-            l_mutari.append(joc_nou)
         return l_mutari
 
     def fct_euristica(self):
@@ -199,7 +214,7 @@ class Joc:
         # pe linii impare afisam cutiile si liniile verticale
         i1 = 0
         i2 = 0
-        for i in range(self.NR_LINII*2 + 1):
+        for i in range(self.NR_LINII * 2 + 1):
             # afisare pt linie para
             if i % 2 == 0:
                 sir += '  .'
@@ -219,7 +234,7 @@ class Joc:
                     sir += ' '
                 for j in range(self.NR_COLOANE):
                     sir += self.matr_scor[i2][j]
-                    if self.matr_vertic[i2][j+1]:
+                    if self.matr_vertic[i2][j + 1]:
                         sir += '|'
                     else:
                         sir += ' '
@@ -407,6 +422,8 @@ def main():
                 try:
                     linie = int(input("linia = "))
                     coloana = input("coloana = ")
+                    [a, b, c, d] = Joc.POZ_VALIDE
+                    pozitia = str(input("Pozitii valide {},{},{},{}.\nPozitia:".format(a, b, c, d))).upper()
                     if not coloana.isalpha():
                         raise ValueError('Coloana nu e caracter')
 
@@ -416,10 +433,12 @@ def main():
                     elif coloana < 'a' or coloana >= chr(ord('a') + Joc.NR_COLOANE):
                         print("Coloana invalida (trebuie sa fie un caracter intre a si {}).".format(
                             chr(ord('a') + Joc.NR_COLOANE)))
+                    elif pozitia not in Joc.POZ_VALIDE:
+                        print("Pozitia invalida!")
                     else:
                         coloana = ord(coloana) - ord('a')
                         # cautare si verificare pozitie valida
-                        if not stare_curenta.tabla_joc.miscare_valida((linie, coloana), Joc.JMIN):
+                        if not stare_curenta.tabla_joc.miscare_valida((linie, coloana, pozitia)):
                             print("Miscare invalida")
                         else:
                             raspuns_valid = True
@@ -429,19 +448,19 @@ def main():
 
             # dupa iesirea din while sigur am valida coloana
             # facem miscarea
-            stare_curenta.tabla_joc.aplica_miscare((linie, coloana), Joc.JMIN)
+            patrate = stare_curenta.tabla_joc.aplica_linie((linie, coloana, pozitia), Joc.JMIN)
 
             # afisarea starii jocului in urma mutarii utilizatorului
             print("\nTabla dupa mutarea jucatorului")
-            # print(str(stare_curenta))
-            print(stare_curenta.tabla_joc.afis_smart(stare_curenta.jucator_opus()))
+            print(str(stare_curenta))
             # testez daca jocul a ajuns intr-o stare finala
             # si afisez un mesaj corespunzator in caz ca da
             if afis_daca_final(stare_curenta):
                 break
 
-            # S-a realizat o mutare. Schimb jucatorul cu cel opus
-            stare_curenta.j_curent = stare_curenta.jucator_opus()
+            # S-a realizat o mutare. Schimb jucatorul cu cel opus (doar daca nu a facut 2 patrate)
+            if patrate != 2:
+                stare_curenta.j_curent = stare_curenta.jucator_opus()
 
         # --------------------------------
         else:  # jucatorul e JMAX (calculatorul)
