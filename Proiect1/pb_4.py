@@ -22,24 +22,33 @@ class Problema:
     def set_euristica(self, euristica):
         self.euristica = euristica
 
-    # calculam distanta manhatan, dar trecand prin penultima/ultima banca
-    # pasi: 30
-    # timp: 0.001
+    # euristica admisibila, nu e consistenta pentru ca ne putem indeparta de scop pentru a ocoli blocaje
+    # calculam distanta manhatan
+    """
+    Admisibilitate: distanta manhatan nu poate sa fie mai lunga decat drumul in sine(miscarile se fac
+    doar stanga-dreapta sau sus-jos)
+    """
     def calc_h1(self, date):
         return abs(self.scop[0] - date[0]) + abs(self.scop[1] - date[1])
 
-    # calculam distanta intre randuri
-    # pasi: 2323
-    # timp: 1.08
+    # euristica admisibila, nu e consistenta pentru ca ne putem indeparta de scop pentru a ocoli blocaje
+    # calculam distanta intre coloane
+    """
+        Admisibilitate: distanta dintre coloane in modul nu poate sa fie mai lunga decat drumul in sine
+        (va trebui sa faca cel putin 'n'(dif dintre coloane) miscari pentru a ajunge pe pozitia scop)
+    """
     def calc_h2(self, date):
         return abs(self.scop[1] - date[1])
 
-    # gresit
-    # pasi: 37
-    # timp: 0.001
+    # euristica nu indeplineste conditia de admisibilitate
+    # calculam triplul distantei intre randuri
+    """
+        Nu e admisibila: Daca avem scopul pe aceeasi coloana si nu avem blocaje va intoarce triplul distantei reale
+    """
     def calc_h3(self, date):
-        return 900 - self.calc_h1(date)
+        return 3 * abs(self.scop[0] - date[0])
 
+    # intoarce true daca persoanele nu sunt suparate si locul nu e liber, fals altfel
     def verif_pozitie(self, sursa, dest):
         # verif loc liber
         if self.matrice[dest[0]][dest[1]] == "liber":
@@ -104,43 +113,52 @@ class NodParcurgere:
     def creeaza_nod(self, noua_poz):
         return NodParcurgere(noua_poz, self, self.g + 1, self.g + 1 + self.calc_euristica(noua_poz))
 
-    # se modifica in functie de problema
+    # functia de generare a succesorilor
     def expandeaza(self):
         # Expandeaza nodul curent, intoarce lista de succesori
         # Construieste direct succesorii ca un nodParcurgere, pare mult mai simplu asa
         lista = []
-        adancime = self.problema.adancime
-        # avem maxim 4 directii, le testam pe toate
-        i = self.date[0]
-        j = self.date[1]
+        # variabile ajutatoare
+        adancime = self.problema.adancime   # numarul de coloane(cel de randuri e intotdeauna 6)
+        i = self.date[0]    # randul
+        j = self.date[1]    # coloana
 
-        # poate sa dea jos daca nu e capat
+        # avem maxim 4 directii in care putem da mesajul, le testam pe toate
+        # in afara de verificarile speciale, la fiecare pas verificam daca nu sunt certate persoanele
+
+        # poate sa dea mesajul in sus daca nu e in primul rand
         if i > 0 and self.problema.verif_pozitie((i, j), (i - 1, j)):
             lista.append(self.creeaza_nod((i - 1, j)))
-        # poate sa dea sus daca nu e capat
+
+        # poate sa dea mesajul in jos  daca nu e in ultimul rand
         if i < adancime - 1 and self.problema.verif_pozitie((i, j), (i + 1, j)):
             lista.append(self.creeaza_nod((i + 1, j)))
 
         # separam cazurile pentru coloana para/impara(numarat de la 0)
-        # (par poate sa dea oriunde spre dreapta, impar spre stanga)
+        # (par poate sa dea oricand spre dreapta, impar oricand spre stanga)
 
         # PAR
-        if j % 2 == 0 and self.problema.verif_pozitie((i, j), (i, j + 1)):
-            lista.append(self.creeaza_nod((i, j + 1)))
-        # poate sa dea doar la capete spre stanga, si daca nu e ultima coloana in stanga
-        if j % 2 == 0 and j != 0 and i >= adancime - 2 and self.problema.verif_pozitie((i, j), (i, j - 1)):
-            lista.append(self.creeaza_nod((i, j - 1)))
+        if j % 2 == 0:
+            # da la dreapta daca nu sunt suparati/loc liber
+            if self.problema.verif_pozitie((i, j), (i, j + 1)):
+                lista.append(self.creeaza_nod((i, j + 1)))
+            # poate sa dea doar in ultimele 2 randuri spre stanga
+            # si daca nu e ultima coloana din stanga
+            if j != 0 and i >= adancime - 2 and self.problema.verif_pozitie((i, j), (i, j - 1)):
+                lista.append(self.creeaza_nod((i, j - 1)))
 
         # IMPAR
-        # poate sa dea doar la capete spre dreapta, si daca nu e ultima coloana in dreapta
-        if j % 2 != 0 and j != 5 and i >= adancime - 2 and self.problema.verif_pozitie((i, j), (i, j + 1)):
-            lista.append(self.creeaza_nod((i, j + 1)))
-        if j % 2 != 0 and self.problema.verif_pozitie((i, j), (i, j - 1)):
-            lista.append(self.creeaza_nod((i, j - 1)))
-
+        if j % 2 != 0:
+            # poate sa dea doar in ultimele doua coloane spre dreapta
+            # si daca nu e ultima coloana in dreapta
+            if j != 5 and i >= adancime - 2 and self.problema.verif_pozitie((i, j), (i, j + 1)):
+                lista.append(self.creeaza_nod((i, j + 1)))
+            # da la stanga daca nu sunt suparati/loc liber
+            if self.problema.verif_pozitie((i, j), (i, j - 1)):
+                lista.append(self.creeaza_nod((i, j - 1)))
         return lista
 
-    # se modifica in functie de problema
+    # functia de testare a scopului, verifica daca pozitia curenta este cea dorita
     def test_scop(self):
         return self.date == self.problema.scop
 
@@ -162,12 +180,11 @@ def str_info_noduri(lista):
 
 
 def str_simpla(lista):
-    """
-        o functie folosita strict in afisari - poate fi modificata in functie de problema
-    """
-
+    # afisare in stilul problemei
     problema = NodParcurgere.problema
+    # adaugam primul nume
     sir = str(problema.matrice[lista[0].date[0]][lista[0].date[1]]) + " "
+    # pentru fiecare doua persoane adaugam intre ele caracterul corespunzator
     for i in range(len(lista) - 1):
         sursa = lista[i].date
         dest = lista[i + 1].date
@@ -263,11 +280,11 @@ def a_star(nume_output):
     with open(nume_output, 'a+') as fisier:
         fisier.write("\n------------- Euristica " + str(NodParcurgere.problema.euristica) + " -----------------\n")
         if len(lopen) == 0:
-            fisier.write("Lista open e vida, nu avem drum de la nodul start la nodul scop\n")
+            fisier.write("Lista open e vida, nu avem drum de la nodul start la nodul scop")
         else:
             fisier.write("Drum de cost minim: " + str_simpla(nod_curent.drum_arbore()))
             fisier.write("\nNumar de pasi incercati: " + str(pasi))
-        fisier.write("Timp trecut:" + str(time.time() - start_time))
+        fisier.write("\nTimp trecut:" + str(time.time() - start_time) +"\n")
 
 
 def citire(fisier):
