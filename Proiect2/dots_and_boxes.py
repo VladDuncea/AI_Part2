@@ -1,6 +1,7 @@
 import time
 import copy
 
+
 def scor(tabla, jucator):
     s = 0
     for linie in tabla:
@@ -19,33 +20,31 @@ def jucator_op(jucator):
 
 class Joc:
     # clasa cu datele pentru joc
-    # tabla trebuie sa fie de dimensiuni pare!
-    NR_COLOANE = 8
-    NR_LINII = 8
-    SIMBOLURI_JUC = ['A', 'N']  # alb si negru
+    # dimensiuni default, se citesc date noi de la tastatura
+    NR_COLOANE = 3
+    NR_LINII = 3
+    SIMBOLURI_JUC = ['A', 'B']  # alb si negru
     JMIN = None
     JMAX = None
-    GOL = '#'
+    GOL = ' '
 
-    def __init__(self, tabla=None):
-        self.matr = tabla or [[Joc.GOL for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII)]
-        # adaugam cele 4 piese initiale daca tabla e noua
-        if tabla is None:
-            self.matr[int(Joc.NR_LINII/2) - 1][int(Joc.NR_COLOANE/2) - 1] = 'A'
-            self.matr[int(Joc.NR_LINII/2) - 1][int(Joc.NR_COLOANE/2)] = 'N'
-            self.matr[int(Joc.NR_LINII/2)][int(Joc.NR_COLOANE/2) - 1] = 'N'
-            self.matr[int(Joc.NR_LINII/2)][int(Joc.NR_COLOANE/2)] = 'A'
+    def __init__(self, vertical=None, orizontal=None, scor=None):
+        self.matr_scor = scor or [[Joc.GOL for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII)]
+        # in matricea verticala avem nr_coloane+1 coloane si nr_linii linii
+        self.matr_vertic = vertical or [[0 for i in range(Joc.NR_COLOANE + 1)] for i in range(Joc.NR_LINII)]
+        # in matricea orizontala avem nr_coloane coloane si nr_linii+1 linii
+        self.matr_orizon = orizontal or [[0 for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII+1)]
 
     def final(self):
         # returnam simbolul jucatorului castigator
         # sau returnam 'remiza'
-        # sau 'False' daca nu s-a terminat jocul\
+        # sau 'False' daca nu s-a terminat jocul
 
-        # verificam daca nu se mai pot face miscari
-        if (not self.exista_miscare(Joc.JMAX)) and (not self.exista_miscare(Joc.JMIN)):
+        # verificam daca se mai pot pune linii
+        if not self.exista_miscare():
             # numaram cate piese are fiecare jucator
-            scor_min = scor(self.matr, Joc.JMIN)
-            scor_max = scor(self.matr, Joc.JMAX)
+            scor_min = scor(self.matr_scor, Joc.JMIN)
+            scor_max = scor(self.matr_scor, Joc.JMAX)
             if scor_min == scor_max:
                 return 'remiza'
             elif scor_max > scor_min:
@@ -56,136 +55,99 @@ class Joc:
             # daca se mai pot face miscari jocul nu s-a terminat
             return False
 
-    def exista_miscare(self, jucator):
-        # verificam fiecare casuta daca e miscare valida
-        # functia miscare_valida verifica initial daca casuta e goala, deci nu trebuie sa mai verificam noi
-        for i in range(self.NR_LINII):
-            for j in range(self.NR_COLOANE):
-                if self.miscare_valida((i, j), jucator):
+    def exista_miscare(self):
+        # verificam daca mai exista linii necompletate
+        for i in range(len(self.matr_vertic)):
+            for j in range(len(self.matr_vertic[0])):
+                if not self.matr_vertic:
                     return True
-        # nu am gasit casute pentru miscare valida
+        for i in range(len(self.matr_orizon)):
+            for j in range(len(self.matr_orizon[0])):
+                if not self.matr_orizon:
+                    return True
+        # nu am gasit linii libere
         return False
 
-    def miscare_valida(self, miscare, jucator):
-        (x, y) = miscare
-        # verificare pozitie goala
-        if self.matr[x][y] != Joc.GOL:
-            return False
-
+    # adaugam linia si intoarcem numarul de casute castigate intoarce -1 daca miscarea nu e valida
+    def aplica_linie(self, miscare, jucator):
+        (x, y, z) = miscare
         opus = jucator_op(jucator)
 
-        # verificare coloana
-        for i in range(x+1, Joc.NR_LINII-1, 1):
-            if self.matr[i][y] == opus and self.matr[i+1][y] == jucator:
-                return True
-            if self.matr[i][y] == jucator or self.matr[i][y] == Joc.GOL:
-                break
-        for i in range(x-1, 0, -1):
-            if self.matr[i][y] == opus and self.matr[i-1][y] == jucator:
-                return True
-            if self.matr[i][y] == jucator or self.matr[i][y] == Joc.GOL:
-                break
+        # actualizam matricea de linii
+        # stanga
+        if z == "L":
+            if self.matr_vertic[x][y] == 0:
+                self.matr_vertic[x][y] = 1
+            else:
+                return -1
+        # dreapta
+        if z == "R":
+            if self.matr_vertic[x][y+1] == 0:
+                self.matr_vertic[x][y+1] = 1
+            else:
+                return -1
 
-        # verificare linie
-        for j in range(y + 1, Joc.NR_COLOANE - 1, 1):
-            if self.matr[x][j] == opus and self.matr[x][j + 1] == jucator:
-                return True
-            if self.matr[x][j] == jucator or self.matr[x][j] == Joc.GOL:
-                break
-        for j in range(y - 1, 0, -1):
-            if self.matr[x][j] == opus and self.matr[x][j-1] == jucator:
-                return True
-            if self.matr[x][j] == jucator or self.matr[x][j] == Joc.GOL:
-                break
+        # sus
+        if z == "T":
+            if self.matr_orizon[x][y] == 0:
+                self.matr_orizon[x][y] = 1
+            else:
+                return -1
 
-        # verificare diagonala \
-        for i in range(1, min(Joc.NR_LINII - x, Joc.NR_COLOANE - y) - 1, 1):
-            if self.matr[x+i][y+i] == opus and self.matr[x+i+1][y+i+1] == jucator:
-                return True
-            if self.matr[x+i][y+i] == jucator or self.matr[x+i][y+i] == Joc.GOL:
-                break
-        for i in range(1, min(x, y), 1):
-            if self.matr[x-i][y-i] == opus and self.matr[x-i-1][y-i-1] == jucator:
-                return True
-            if self.matr[x-i][y-i] == jucator or self.matr[x-i][y-i] == Joc.GOL:
-                break
+        # jos
+        if z == "B":
+            if self.matr_orizon[x+1][y] == 0:
+                self.matr_orizon[x+1][y] = 1
+            else:
+                return -1
 
-        # verificare diagonala /
-        for i in range(1, min(x + 1, Joc.NR_COLOANE - y) - 1, 1):
-            if self.matr[x - i][y + i] == opus and self.matr[x - i - 1][y + i + 1] == jucator:
-                return True
-            if self.matr[x - i][y + i] == jucator or self.matr[x - i][y + i] == Joc.GOL:
-                break
-        for i in range(1, min(Joc.NR_LINII - x, y + 1) - 1, 1):
-            if self.matr[x + i][y - i] == opus and self.matr[x + i + 1][y - i - 1] == jucator:
-                return True
-            if self.matr[x + i][y - i] == jucator or self.matr[x + i][y - i] == Joc.GOL:
-                break
-        # nu am gasit potriviri
-        return False
+        # numaram cate patrate a facut si le actualizam
+        contor = 0
+        # cazuri pentru linie verticala
+        if z == "L" or z == "R":
+            # ne purtam de parca linia este in stanga coordonatelor
+            i = x
+            if z == "L":
+                j = y
+            else:
+                j = y+1
 
-    def aplica_miscare(self, miscare, jucator):
-        (x, y) = miscare
-        opus = jucator_op(jucator)
+            # verificam la stanga daca nu e prima linie verticala
+            if j != 0:
+                if self.matr_orizon[i][j-1] and self.matr_orizon[i+1][j-1] and self.matr_vertic[i][j-1]:
+                    contor += 1
+                    self.matr_scor[i][j-1] = jucator
 
-        # cautare coloana
-        for i in range(x + 1, Joc.NR_LINII - 1, 1):
-            if self.matr[i][y] == opus and self.matr[i + 1][y] == jucator:
-                for k in range(x+1, i + 1, 1):
-                    self.matr[k][y] = jucator
-            if self.matr[i][y] == jucator or self.matr[i][y] == Joc.GOL:
-                break
-        for i in range(x - 1, 0, -1):
-            if self.matr[i][y] == opus and self.matr[i - 1][y] == jucator:
-                for k in range(x-1, i - 1, -1):
-                    self.matr[k][y] = jucator
-            if self.matr[i][y] == jucator or self.matr[i][y] == Joc.GOL:
-                break
+            # verificam la dreapta daca nu e ultima linie verticala
+            if j != Joc.NR_COLOANE:
+                if self.matr_orizon[i][j] and self.matr_orizon[i + 1][j] and self.matr_vertic[i][j]:
+                    contor += 1
+                    self.matr_scor[i][j] = jucator
 
-        # verificare linie
-        for j in range(y + 1, Joc.NR_COLOANE - 1, 1):
-            if self.matr[x][j] == opus and self.matr[x][j + 1] == jucator:
-                for k in range(y+1, j + 1, 1):
-                    self.matr[x][k] = jucator
-            if self.matr[x][j] == jucator or self.matr[x][j] == Joc.GOL:
-                break
-        for j in range(y - 1, 0, -1):
-            if self.matr[x][j] == opus and self.matr[x][j - 1] == jucator:
-                for k in range(y-1, j + 1, 1):
-                    self.matr[x][k] = jucator
-            if self.matr[x][j] == jucator or self.matr[x][j] == Joc.GOL:
-                break
+        # cazuri pentru linie orizontala
+        if z == "T" or z == "B":
+            # ne purtam de parca linia este deasupra coordonatelor
+            if z == "T":
+                i = x
+            else:
+                i = x + 1
+            j = y
 
-        # verificare diagonala \
-        for i in range(1, min(Joc.NR_LINII - x, Joc.NR_COLOANE - y) - 1, 1):
-            if self.matr[x + i][y + i] == opus and self.matr[x + i + 1][y + i + 1] == jucator:
-                for k in range(1, i+1, 1):
-                    self.matr[x + k][y + k] = jucator
-            if self.matr[x + i][y + i] == jucator or self.matr[x + i][y + i] == Joc.GOL:
-                break
-        for i in range(1, min(x, y), 1):
-            if self.matr[x - i][y - i] == opus and self.matr[x - i - 1][y - i - 1] == jucator:
-                for k in range(1, i + 1, 1):
-                    self.matr[x - k][y - k] = jucator
-            if self.matr[x - i][y - i] == jucator or self.matr[x - i][y - i] == Joc.GOL:
-                break
+            # verificam la sus daca nu e prima linie orizontala
+            if i != 0:
+                if self.matr_orizon[i-1][j] and self.matr_vertic[i - 1][j] and self.matr_vertic[i-1][j + 1]:
+                    contor += 1
+                    self.matr_scor[i-1][j] = jucator
 
-        # verificare diagonala /
-        for i in range(1, min(x + 1, Joc.NR_COLOANE - y) - 1, 1):
-            if self.matr[x - i][y + i] == opus and self.matr[x - i - 1][y + i + 1] == jucator:
-                for k in range(1, i + 1, 1):
-                    self.matr[x - k][y + k] = jucator
-            if self.matr[x - i][y + i] == jucator or self.matr[x - i][y + i] == Joc.GOL:
-                break
-        for i in range(1, min(Joc.NR_LINII - x, y + 1) - 1, 1):
-            if self.matr[x + i][y - i] == opus and self.matr[x + i + 1][y - i - 1] == jucator:
-                for k in range(1, i + 1, 1):
-                    self.matr[x + k][y - k] = jucator
-            if self.matr[x + i][y - i] == jucator or self.matr[x + i][y - i] == Joc.GOL:
-                break
-        # punem si piesa curenta
-        self.matr[x][y] = jucator
+            # verificam la jos daca nu e ultima linie orizontala
+            if i != Joc.NR_LINII:
+                if self.matr_orizon[i+1][j] and self.matr_vertic[i][j] and self.matr_vertic[i][j+1]:
+                    contor += 1
+                    self.matr_scor[i][j] = jucator
 
+        return contor
+
+    # TODO
     def mutari_joc(self, jucator):
         l_mutari = []
 
@@ -207,7 +169,7 @@ class Joc:
 
     def fct_euristica(self):
         # numarul de piese JMAX - JMIN
-        return scor(self.matr, Joc.JMAX) - scor(self.matr, Joc.JMIN)
+        return scor(self.matr_scor, Joc.JMAX) - scor(self.matr_scor, Joc.JMIN)
 
     def estimeaza_scor(self, adancime):
         t_final = self.final()
@@ -221,40 +183,48 @@ class Joc:
             return self.fct_euristica()
 
     def __str__(self):
+        # afisare codul coloanelor
         sir = '   '
         for nr_col in range(self.NR_COLOANE):
             sir += chr(ord('a') + nr_col) + ' '
         sir += '\n'
-        sir += '  '
-        for nr_col in range(self.NR_COLOANE-1):
-            sir += '--'
-        sir += '-\n'
-
-        for i in range(self.NR_LINII):
-            sir += str(i) + ' |'
-            for j in range(self.NR_COLOANE):
-                sir += str(self.matr[i][j]) + " "
-            sir += "\n"
-        return sir
-
-    def afis_smart(self, jucator):
-        sir = '   '
+        # afisare separator
+        sir += '  -'
         for nr_col in range(self.NR_COLOANE):
-            sir += chr(ord('a') + nr_col) + ' '
-        sir += '\n'
-        sir += '  '
-        for nr_col in range(self.NR_COLOANE - 1):
             sir += '--'
-        sir += '-\n'
+        sir += '\n'
 
-        for i in range(self.NR_LINII):
-            sir += str(i) + ' |'
-            for j in range(self.NR_COLOANE):
-                if self.matr[i][j] == Joc.GOL and self.miscare_valida((i,j), jucator):
-                    sir += "* "
+        # afisare tabla
+        # pe linii pare afisam liiniile orizontale si puncte
+        # pe linii impare afisam cutiile si liniile verticale
+        i1 = 0
+        i2 = 0
+        for i in range(self.NR_LINII*2 + 1):
+            # afisare pt linie para
+            if i % 2 == 0:
+                sir += '  .'
+                for j in range(self.NR_COLOANE):
+                    if self.matr_orizon[i1][j]:
+                        sir += '-.'
+                    else:
+                        sir += ' .'
+                sir += "\n"
+                i1 += 1
+            # afisare pt linie impara
+            if i % 2 != 0:
+                sir += str(i2) + ' '
+                if self.matr_vertic[i2][0]:
+                    sir += '|'
                 else:
-                    sir += str(self.matr[i][j]) + " "
-            sir += "\n"
+                    sir += ' '
+                for j in range(self.NR_COLOANE):
+                    sir += self.matr_scor[i2][j]
+                    if self.matr_vertic[i2][j+1]:
+                        sir += '|'
+                    else:
+                        sir += ' '
+                sir += "\n"
+                i2 += 1
         return sir
 
 
@@ -264,16 +234,12 @@ class Stare:
     def __init__(self, tabla_joc, j_curent, adancime, parinte=None, scor=None):
         self.tabla_joc = tabla_joc
         self.j_curent = j_curent
-
         # adancimea in arborele de stari
         self.adancime = adancime
-
         # scorul starii (daca e finala) sau al celei mai bune stari-fiice (pentru jucatorul curent)
         self.scor = scor
-
         # lista de mutari posibile din starea curenta
         self.mutari_posibile = []
-
         # cea mai buna mutare din lista de mutari posibile pentru jucatorul curent
         self.stare_aleasa = None
 
@@ -359,13 +325,14 @@ def alpha_beta(alpha, beta, stare):
                 beta = stare_noua.scor
                 if alpha >= beta:
                     break
-
     stare.scor = stare.stare_aleasa.scor
-
     return stare
 
 
 def afis_daca_final(stare_curenta):
+    # ?? TO DO:
+    # de adagat parametru "pozitie", ca sa nu verifice mereu toata tabla,
+    # ci doar linia, coloana, 2 diagonale pt elementul nou, de pe "pozitie"
 
     final = stare_curenta.tabla_joc.final()
     if final:
@@ -410,26 +377,30 @@ def main():
             print("Raspunsul trebuie sa fie {} sau {}.".format(s1, s2))
     Joc.JMAX = s1 if Joc.JMIN == s2 else s2
 
+    # initializare ADANCIME_MAX
+    raspuns_valid = False
+    while not raspuns_valid:
+        x = input("Linii: ")
+        y = input("Coloane: ")
+        if x.isdigit() and y.isdigit():
+            Joc.NR_LINII = int(x)
+            Joc.NR_COLOANE = int(y)
+            raspuns_valid = True
+        else:
+            print("Trebuie sa introduceti un numar natural nenul.")
+
     # initializare tabla
     tabla_curenta = Joc()
     print("Tabla initiala")
     print(str(tabla_curenta))
 
-    # creare stare initiala (negru joaca primul)
-    stare_curenta = Stare(tabla_curenta, Joc.SIMBOLURI_JUC[1], Stare.ADANCIME_MAX)
+    # creare stare initiala vietatea joaca prima
+    stare_curenta = Stare(tabla_curenta, Joc.JMIN, Stare.ADANCIME_MAX)
 
     linie = -1
     coloana = -1
     while True:
-        # verificare daca poate juca(nu se poate ca ambii sa fie blocati, altfel se termina jocul si afisam castigator)
-        if not stare_curenta.tabla_joc.exista_miscare(stare_curenta.j_curent):
-            # dam tura celuilalt
-            stare_curenta.j_curent = stare_curenta.jucator_opus()
-
         if stare_curenta.j_curent == Joc.JMIN:
-            # afisare tabla ajutatoare
-            print("* sunt pozitii valide")
-            print(stare_curenta.tabla_joc.afis_smart(stare_curenta.j_curent))
             # muta jucatorul
             raspuns_valid = False
             while not raspuns_valid:
@@ -443,7 +414,8 @@ def main():
                     if linie < 0 or linie >= Joc.NR_LINII:
                         print("Linie invalida (trebuie sa fie un numar intre 0 si {}).".format(Joc.NR_COLOANE - 1))
                     elif coloana < 'a' or coloana >= chr(ord('a') + Joc.NR_COLOANE):
-                        print("Coloana invalida (trebuie sa fie un caracter intre a si {}).".format(chr(ord('a') + Joc.NR_COLOANE)))
+                        print("Coloana invalida (trebuie sa fie un caracter intre a si {}).".format(
+                            chr(ord('a') + Joc.NR_COLOANE)))
                     else:
                         coloana = ord(coloana) - ord('a')
                         # cautare si verificare pozitie valida
@@ -461,8 +433,8 @@ def main():
 
             # afisarea starii jocului in urma mutarii utilizatorului
             print("\nTabla dupa mutarea jucatorului")
-            print(str(stare_curenta))
-
+            # print(str(stare_curenta))
+            print(stare_curenta.tabla_joc.afis_smart(stare_curenta.jucator_opus()))
             # testez daca jocul a ajuns intr-o stare finala
             # si afisez un mesaj corespunzator in caz ca da
             if afis_daca_final(stare_curenta):

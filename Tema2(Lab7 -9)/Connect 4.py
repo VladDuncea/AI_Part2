@@ -266,10 +266,6 @@ def alpha_beta(alpha, beta, stare):
 
 
 def afis_daca_final(stare_curenta):
-	# ?? TO DO:
-	# de adagat parametru "pozitie", ca sa nu verifice mereu toata tabla,
-	# ci doar linia, coloana, 2 diagonale pt elementul nou, de pe "pozitie"
-
 	final = stare_curenta.tabla_joc.final()
 	if final:
 		if final == "remiza":
