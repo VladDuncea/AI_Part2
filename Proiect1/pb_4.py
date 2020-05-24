@@ -1,3 +1,5 @@
+# Grupa 244 Duncea Vlad Alexandru
+
 import copy
 import time
 
@@ -18,10 +20,11 @@ class Problema:
         # setam euristica default
         self.euristica = 1
 
-    # functie ca sa setam euristica curenta
+    # functie ca sa setam euristica curenta(valoare intre 1 si 3)
     def set_euristica(self, euristica):
         self.euristica = euristica
 
+    # in calcul euristici 'date' este pozitia pentru care se aproximeaza distanta
     # euristica admisibila, nu e consistenta pentru ca ne putem indeparta de scop pentru a ocoli blocaje
     # calculam distanta manhatan
     """
@@ -49,6 +52,7 @@ class Problema:
         return 3 * abs(self.scop[0] - date[0])
 
     # intoarce true daca persoanele nu sunt suparate si locul nu e liber, fals altfel
+    # sursa,dest sunt coordonatele sursei/destinatiei
     def verif_pozitie(self, sursa, dest):
         # verif loc liber
         if self.matrice[dest[0]][dest[1]] == "liber":
@@ -65,13 +69,10 @@ class Problema:
 # Sfarsit definire problema
 
 # Clase folosite in algoritmul A*
-
-
 class NodParcurgere:
     """O clasa care cuprinde informatiile asociate unui nod din listele open/closed
         Cuprinde o referinta catre nodul in sine (din graf)
         dar are ca proprietati si valorile specifice algoritmului A* (f si g).
-        Se presupune ca h este proprietate a nodului din graf
     """
     problema = None  # atribut al clasei
 
@@ -100,6 +101,7 @@ class NodParcurgere:
             nod_c = nod_c.parinte
         return False
 
+    # functie care calculeaza aproximarea in functie de euristica aleasa
     def calc_euristica(self, date):
         # calculam noul h
         if NodParcurgere.problema.euristica == 1:
@@ -110,6 +112,7 @@ class NodParcurgere:
             noul_h = self.problema.calc_h3(date)
         return noul_h
 
+    # functie care sa creeze nodul(asa apar mai putine linii duplicat)
     def creeaza_nod(self, noua_poz):
         return NodParcurgere(noua_poz, self, self.g + 1, self.g + 1 + self.calc_euristica(noua_poz))
 

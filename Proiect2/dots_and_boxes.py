@@ -36,6 +36,7 @@ class Joc:
         # in matricea orizontala avem nr_coloane coloane si nr_linii+1 linii
         self.matr_orizon = orizontal or [[0 for i in range(Joc.NR_COLOANE)] for i in range(Joc.NR_LINII + 1)]
 
+    # functie de testare a starii finale si de stabilire a castigatorului
     def final(self):
         # returnam simbolul jucatorului castigator
         # sau returnam 'remiza'
@@ -56,6 +57,7 @@ class Joc:
             # daca se mai pot face miscari jocul nu s-a terminat
             return False
 
+    # functia care verifica daca mai exista miscari posibile
     def exista_miscare(self):
         # verificam daca mai exista linii necompletate
         for i in range(len(self.matr_vertic)):
@@ -69,6 +71,7 @@ class Joc:
         # nu am gasit linii libere
         return False
 
+    # functie care verifica daca o miscare e valida
     def miscare_valida(self, miscare):
         (x, y, z) = miscare
 
@@ -159,6 +162,7 @@ class Joc:
 
         return contor
 
+    # functia de generare a miscarilor (succesorilor)
     def mutari_joc(self, jucator):
         l_mutari = []
 
@@ -371,15 +375,24 @@ def main():
         else:
             print("Nu ati ales o varianta corecta.")
 
-    # initializare ADANCIME_MAX
+    # initializare ADANCIME_MAX, intrabam user-ul greutatea
+    # 2-Usor
+    # 3-Mediu
+    # 4-Greu
     raspuns_valid = False
     while not raspuns_valid:
-        n = input("Adancime maxima a arborelui: ")
-        if n.isdigit():
-            Stare.ADANCIME_MAX = int(n)
+        n = input("Greutatea jocului: (raspundeti cu 1,2 sau 3)\n 1.Usor\n 2.Mediu\n 3.Greu\n ")
+        if n.isdigit() and 1 <= int(n) <= 3:
+            n = int(n)
+            if n == 1:
+                Stare.ADANCIME_MAX = 2
+            elif n == 2:
+                Stare.ADANCIME_MAX = 3
+            elif n == 3:
+                Stare.ADANCIME_MAX = 4
             raspuns_valid = True
         else:
-            print("Trebuie sa introduceti un numar natural nenul.")
+            print("Trebuie sa introduceti un numar natural nenul intre 1 si 3.")
 
     # initializare jucatori
     [s1, s2] = Joc.SIMBOLURI_JUC.copy()  # lista de simboluri posibile
