@@ -2,11 +2,32 @@ import time
 import copy
 
 
+# TODO: inca o functie de scor
 def scor(tabla, jucator):
+    # functia simpla de scor, intoarce numarul de patrate acumulate de jucator
     s = 0
     for linie in tabla:
         for casuta in linie:
             if casuta == jucator:
+                s += 1
+    return s
+
+
+def scor_max(tabla, jucator):
+    # functia de scor 2, intoarce scorul maxim pe care il poate acumula jucatorul
+    # si daca  trece de jumatate cu scorul curent intoarce 9999(castig sigur)
+    s = 0
+    for linie in tabla:
+        for casuta in linie:
+            if casuta == jucator:
+                s += 1
+
+    # verificare castig sigur
+    if s > (Joc.NR_COLOANE * Joc.NR_LINII)/2:
+        return 9999
+    for linie in tabla:
+        for casuta in linie:
+            if casuta == Joc.GOL:
                 s += 1
     return s
 
@@ -188,7 +209,7 @@ class Joc:
 
     def fct_euristica(self):
         # numarul de piese JMAX - JMIN
-        return scor(self.matr_scor, Joc.JMAX) - scor(self.matr_scor, Joc.JMIN)
+        return scor_max(self.matr_scor, Joc.JMAX) - scor_max(self.matr_scor, Joc.JMIN)
 
     def estimeaza_scor(self, adancime):
         t_final = self.final()
@@ -275,6 +296,10 @@ class Stare:
 
         return l_stari_mutari
 
+    def afisare_scor(self):
+        print("Scor jucator:" + str(scor(self.tabla_joc.matr_scor, Joc.JMIN)))
+        print("Scor calculator:" + str(scor(self.tabla_joc.matr_scor, Joc.JMAX)))
+
     def __str__(self):
         sir = str(self.tabla_joc) + "(Juc curent: " + self.j_curent + ")\n"
         return sir
@@ -349,17 +374,14 @@ def alpha_beta(alpha, beta, stare):
 
 
 def afis_daca_final(stare_curenta):
-    # ?? TO DO:
-    # de adagat parametru "pozitie", ca sa nu verifice mereu toata tabla,
-    # ci doar linia, coloana, 2 diagonale pt elementul nou, de pe "pozitie"
-
     final = stare_curenta.tabla_joc.final()
     if final:
         if final == "remiza":
             print("Remiza!")
         else:
             print("A castigat " + final)
-
+        # afisare scor
+        stare_curenta.afisare_scor()
         return True
 
     return False
@@ -425,15 +447,24 @@ def main():
     # creare stare initiala vietatea joaca prima
     stare_curenta = Stare(tabla_curenta, Joc.JMIN, Stare.ADANCIME_MAX)
 
+    # Afisare informatie iesire
+    print("Daca doriti sa iesiti scrieti \"exit\" cand sunteti intrebat \"linie=\"!")
+
     linie = -1
     coloana = -1
     while True:
         if stare_curenta.j_curent == Joc.JMIN:
+            t_inainte = int(round(time.time() * 1000))
             # muta jucatorul
             raspuns_valid = False
             while not raspuns_valid:
                 try:
-                    linie = int(input("linia = "))
+                    linie = input("linia = ")
+                    if linie == "exit":
+                        print("Jocul a fost intrerupt")
+                        stare_curenta.afisare_scor()
+                        return 0
+                    linie = int(linie)
                     coloana = input("coloana = ")
                     [a, b, c, d] = Joc.POZ_VALIDE
                     pozitia = str(input("Pozitii valide {},{},{},{}.\nPozitia:".format(a, b, c, d))).upper()
@@ -463,6 +494,9 @@ def main():
             # facem miscarea
             patrate = stare_curenta.tabla_joc.aplica_linie((linie, coloana, pozitia), Joc.JMIN)
 
+            # afiseaza cat a gandit jucatorul:
+            t_dupa = int(round(time.time() * 1000))
+            print("Jucatorul a \"gandit\" timp de " + str(t_dupa - t_inainte) + " milisecunde.")
             # afisarea starii jocului in urma mutarii utilizatorului
             print("\nTabla dupa mutarea jucatorului")
             print(str(stare_curenta))
@@ -485,13 +519,25 @@ def main():
                 stare_actualizata = min_max(stare_curenta)
             else:  # tip_algoritm==2
                 stare_actualizata = alpha_beta(-5000, 5000, stare_curenta)
+            matr1 = stare_curenta.tabla_joc.matr_vertic
+            matr2 = stare_curenta.tabla_joc.matr_orizon
+            pasi = 0
             stare_curenta.tabla_joc = stare_actualizata.stare_aleasa.tabla_joc
+            for i in range(len(matr1)):
+                for j in range(len(matr1[0])):
+                    if matr1[i][j] != stare_curenta.tabla_joc.matr_vertic[i][j]:
+                        pasi += 1
+            for i in range(len(matr2)):
+                for j in range(len(matr2[0])):
+                    if matr2[i][j] != stare_curenta.tabla_joc.matr_orizon[i][j]:
+                        pasi += 1
             print("Tabla dupa mutarea calculatorului")
             print(str(stare_curenta))
 
             # preiau timpul in milisecunde de dupa mutare
             t_dupa = int(round(time.time() * 1000))
             print("Calculatorul a \"gandit\" timp de " + str(t_dupa - t_inainte) + " milisecunde.")
+            print("Calculatorul a facut " + str(pasi) +" pasi!")
 
             if afis_daca_final(stare_curenta):
                 break
